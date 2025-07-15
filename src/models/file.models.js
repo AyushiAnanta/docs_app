@@ -1,22 +1,27 @@
 import mongoose, {Schema} from "mongoose";
 
-const versionSchema = new Schema(
+const fileSchema = new Schema(
     {
-        content: {
-            type: Object,
-            required: true
-        },
         document: {
             type: Schema.Types.ObjectId,
             ref: "Doc",
             required: true
         },
-        createdBy: {
+        uploadedBy: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true
         },
+        filename: {
+            type: String,
+            required: true
+        },
+        url: {
+            type: String,
+            required: true
+        }
+        
     },{timestamps: true}
 )
 
-export const Version = mongoose.model("Version", versionSchema)
+export const File = mongoose.model("File", fileSchema)
