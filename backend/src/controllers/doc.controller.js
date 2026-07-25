@@ -5,6 +5,7 @@ import { Doc } from "../models/doc.model.js";
 import { Folder } from "../models/folder.model.js";
 import mongoose from "mongoose";
 import { syncEmbeddings } from "../utils/syncEmbeddings.js";
+import { importFile } from "../utils/fileImport/index.js";
 
 // GET /api/docs - Get all user docs
 const getAllDocs = asyncHandler(async (req, res) => {
@@ -239,6 +240,46 @@ const getSharedDocById = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, doc, "Shared document fetched successfully"));
 });
 
+// POST /api/v1/docs/import - Upload & convert file (.pdf, .docx, .txt)
+const importDoc = asyncHandler(async (req, res) => {
+  const file = req.file;
+  if (!file) {
+    throw new ApiError(400, "File is required");
+  }
+
+  const { folderId } = req.body;
+  let targetFolder = folderId;
+
+  if (!targetFolder) {
+    const existingFolder = await Folder.findOne({ owner: req.user._id, name: "Uploads" });
+    if (existingFolder) {
+      targetFolder = existingFolder._id;
+    } else {
+      const newFolder = await Folder.create({ name: "Uploads", owner: req.user._id });
+      targetFolder = newFolder._id;
+    }
+  }
+
+  const filename = file.originalname || "Untitled_File";
+  const titleWithoutExt = filename.substring(0, filename.lastIndexOf(".")) || filename;
+
+  const parsedHTML = await importFile(file.buffer, file.mimetype, filename);
+
+  const doc = await Doc.create({
+    owner: req.user._id,
+    title: titleWithoutExt,
+    content: parsedHTML,
+    folder: targetFolder,
+  });
+
+  // Fire-and-forget: sync embeddings
+  syncEmbeddings(doc._id.toString(), req.user._id.toString(), doc.content).catch((err) =>
+    console.error("[importDoc] syncEmbeddings error:", err.message)
+  );
+
+  return res.status(201).json(new ApiResponse(201, doc, "Document imported successfully"));
+});
+
 export {
     getAllDocs,
     createDoc,
@@ -247,5 +288,6 @@ export {
     deleteDoc,
     toggleDocVisibility,
     getDocsByFolder,
-    getSharedDocById
+    getSharedDocById,
+    importDoc
 }

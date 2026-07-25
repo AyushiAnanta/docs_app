@@ -7,18 +7,12 @@ import {
   deleteDoc,
   toggleDocVisibility,
   getDocsByFolder,
-  getSharedDocById
-  // Add later:
-  // searchDocs,
-  // getRecentDocs,
-  // getPublicDocs,
-  // duplicateDoc,
-  // moveDocToFolder,
-  // updateDocTags,
-  // renameDoc,
+  getSharedDocById,
+  importDoc,
 } from '../controllers/doc.controller.js';
 
 import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { memoryUpload } from '../middlewares/multer.middleware.js';
 
 const router = express.Router();
 
@@ -32,6 +26,9 @@ router.use(verifyJWT);
 router.route('/')
   .get(getAllDocs)        // GET all docs done
   .post(createDoc);       // Create new doc done
+
+// POST /api/docs/import - File import endpoint
+router.post('/import', memoryUpload.single('file'), importDoc);
 
 // /api/docs/:id
 router.route('/:id')

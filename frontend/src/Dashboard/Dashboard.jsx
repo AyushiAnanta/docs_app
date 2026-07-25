@@ -4,6 +4,7 @@ import MainComponent from './MainComponent'
 import SideBar from './SideBar'
 import NewDocModal from './NewDocModal'
 import SettingsModal, { applyTheme } from './SettingsModal'
+import Notification from '../components/Notification/Notification'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import './dashboard.css'
@@ -28,6 +29,8 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
   const uploadInputRef = useRef(null)
   // Semantic search state
   const [searchResults, setSearchResults] = useState(null) // null = not searched yet; [] = no results
+  // Inline notification state
+  const [notification, setNotification] = useState(null)
 
   const loadScript = (id, src) => {
     return new Promise((resolve) => {
@@ -60,89 +63,21 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
         }
       }
 
-      const extension = file.name.split('.').pop().toLowerCase()
-      const titleWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name
-      let parsedHTML = ''
+      const formData = new FormData()
+      formData.append('file', file)
+      if (folderId) formData.append('folderId', folderId)
 
-      if (extension === 'txt') {
-        parsedHTML = await new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = (evt) => {
-            const text = evt.target.result
-            const cleanText = text
-              .split('\n')
-              .map(line => `<p>${line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`)
-              .join('')
-            resolve(cleanText)
-          }
-          reader.onerror = (err) => reject(err)
-          reader.readAsText(file)
-        })
-      } else if (extension === 'docx' || extension === 'doc') {
-        await loadScript('mammoth-script', 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js')
-        parsedHTML = await new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = async (evt) => {
-            try {
-              const arrayBuffer = evt.target.result
-              if (!window.mammoth) {
-                throw new Error("Mammoth library failed to load.")
-              }
-              const result = await window.mammoth.convertToHtml({ arrayBuffer })
-              resolve(result.value || '<p></p>')
-            } catch (err) {
-              reject(err)
-            }
-          }
-          reader.onerror = (err) => reject(err)
-          reader.readAsArrayBuffer(file)
-        })
-      } else if (extension === 'pdf') {
-        await loadScript('pdfjs-script', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js')
-        parsedHTML = await new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = async (evt) => {
-            try {
-              const arrayBuffer = evt.target.result
-              if (!window.pdfjsLib) {
-                throw new Error("PDF.js library failed to load.")
-              }
-              window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js'
-              const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise
-              let htmlText = ''
-              for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i)
-                const textContent = await page.getTextContent()
-                const pageText = textContent.items.map(item => item.str).join(' ')
-                if (pageText.trim()) {
-                  htmlText += `<p>${pageText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`
-                }
-              }
-              resolve(htmlText || '<p>Empty PDF document</p>')
-            } catch (err) {
-              reject(err)
-            }
-          }
-          reader.onerror = (err) => reject(err)
-          reader.readAsArrayBuffer(file)
-        })
-      } else {
-        throw new Error("Unsupported format. Please upload .pdf, .docx, or .txt files.")
-      }
-
-      // Create a native document on the backend with this HTML content
-      const docRes = await axios.post('/api/v1/docs/', {
-        title: titleWithoutExt,
-        folder: folderId,
-        content: parsedHTML
+      const docRes = await axios.post('/api/v1/docs/import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       })
       const newDoc = docRes.data.data
 
       // Redirect directly to the workspace editor page
       navigate(`/document/${newDoc._id}`)
     } catch (err) {
-      console.error("Error converting file:", err)
-      alert(err.message || "Failed to convert file to native document.")
+      console.error("Error importing file:", err)
+      const errorMsg = err.response?.data?.message || err.message || "Failed to import file to native document."
+      setNotification({ message: errorMsg, type: 'error' })
     } finally {
       setLoading(false)
       if (uploadInputRef.current) uploadInputRef.current.value = ''
@@ -403,6 +338,8 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
           onUserUpdate={(updatedUser) => setUser(updatedUser)}
         />
       )}
+
+      <Notification notification={notification} onClose={() => setNotification(null)} />
     </div>
   )
 }

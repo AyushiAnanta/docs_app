@@ -7,11 +7,13 @@ import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
+import TextAlign from '@tiptap/extension-text-align'
 import CustomHighlight from '../Highlight'
 import { Download, Paperclip, File, Trash2, Loader2, CloudLightning, Sparkles } from 'lucide-react'
 import { applyTheme, applyThemeMode } from '../Dashboard/SettingsModal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import RagChat from '../components/RagChat/RagChat'
+import Notification from '../components/Notification/Notification'
 import {
   faBold,
   faItalic,
@@ -68,6 +70,9 @@ const MainDoc = () => {
   // RAG Chat panel state
   const [ragChatOpen, setRagChatOpen] = useState(false)
 
+  // Inline notification state
+  const [notification, setNotification] = useState(null)
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -76,6 +81,9 @@ const MainDoc = () => {
       Underline,
       Image,
       CustomHighlight,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
       Placeholder.configure({
         placeholder: 'Write something awesome...',
       }),
@@ -269,7 +277,7 @@ const MainDoc = () => {
       }
     } catch (error) {
       console.error("Error uploading file:", error)
-      alert(error.response?.data?.message || "File upload failed.")
+      setNotification({ message: error.response?.data?.message || "File upload failed.", type: 'error' })
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -867,6 +875,9 @@ const MainDoc = () => {
 
     {/* RAG Chat slide-over panel */}
     <RagChat isOpen={ragChatOpen} onClose={() => setRagChatOpen(false)} />
+
+    {/* Inline toast notification */}
+    <Notification notification={notification} onClose={() => setNotification(null)} />
   </>
   )
 }
