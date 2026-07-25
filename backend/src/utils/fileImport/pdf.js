@@ -7,6 +7,7 @@
  */
 
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { ApiError } from '../ApiError.js';
 
 function escapeHtml(str) {
   return str
@@ -77,8 +78,9 @@ async function importPdf(buffer) {
   );
 
   if (totalTextLength < 10) {
-    throw new Error(
-      'Could not extract text layer. Scanned or image-based PDFs are not supported for text import.'
+    throw new ApiError(
+      400,
+      'Scanned or image-based PDFs are not supported for text import.'
     );
   }
 

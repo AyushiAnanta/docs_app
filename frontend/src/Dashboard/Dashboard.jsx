@@ -163,8 +163,11 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
       await axios.delete(`/api/v1/docs/${docId}`)
       setDocs(prev => prev.filter(d => d._id !== docId))
       setPinnedDocIds(prev => prev.filter(id => id !== docId))
+      setNotification({ message: "Document deleted successfully.", type: 'info' })
     } catch (error) {
       console.error('Error deleting doc:', error)
+      const msg = error.response?.data?.message || "Failed to delete document."
+      setNotification({ message: msg, type: 'error' })
     }
   }
 
@@ -174,6 +177,8 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
       onLogout()
     } catch (error) {
       console.error('Logout error:', error)
+      const msg = error.response?.data?.message || "Failed to log out."
+      setNotification({ message: msg, type: 'error' })
     }
   }
 
@@ -185,6 +190,8 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
       navigate(`/document/${newDoc._id}`)
     } catch (error) {
       console.error('Error creating doc:', error)
+      const msg = error.response?.data?.message || "Failed to create document."
+      setNotification({ message: msg, type: 'error' })
     }
   }
 
@@ -192,8 +199,11 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
     try {
       await axios.post('/api/v1/folder/', { name, parentFolder })
       fetchFolders()
+      setNotification({ message: `Folder "${name}" created.`, type: 'success' })
     } catch (error) {
       console.error('Error creating folder:', error)
+      const msg = error.response?.data?.message || "Failed to create folder."
+      setNotification({ message: msg, type: 'error' })
     }
   }
 
@@ -201,8 +211,11 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
     try {
       await axios.patch(`/api/v1/folder/${folderId}`, { name: newName })
       fetchFolders()
+      setNotification({ message: "Folder renamed.", type: 'success' })
     } catch (error) {
       console.error('Error renaming folder:', error)
+      const msg = error.response?.data?.message || "Failed to rename folder."
+      setNotification({ message: msg, type: 'error' })
     }
   }
 
@@ -213,8 +226,11 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
       if (activeFolder === folderId) {
         fetchAllDocs()
       }
+      setNotification({ message: "Folder deleted.", type: 'info' })
     } catch (error) {
       console.error('Error deleting folder:', error)
+      const msg = error.response?.data?.message || "Failed to delete folder."
+      setNotification({ message: msg, type: 'error' })
     }
   }
 

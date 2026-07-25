@@ -252,9 +252,12 @@ const MainDoc = () => {
         setTitle(restoredDoc.title);
         setSaveStatus('saved');
         setShowPanel(false);
+        setNotification({ message: "Document restored to selected version.", type: 'success' });
       }
     } catch (error) {
       console.error("Error restoring version:", error);
+      const msg = error.response?.data?.message || "Failed to restore version.";
+      setNotification({ message: msg, type: 'error' });
     }
   }
 
@@ -274,10 +277,12 @@ const MainDoc = () => {
       })
       if (res.data.success || res.data.statusCode === 201) {
         fetchAttachments()
+        setNotification({ message: "Attachment uploaded successfully.", type: 'success' });
       }
     } catch (error) {
       console.error("Error uploading file:", error)
-      setNotification({ message: error.response?.data?.message || "File upload failed.", type: 'error' })
+      const msg = error.response?.data?.message || "File upload failed.";
+      setNotification({ message: msg, type: 'error' })
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -291,8 +296,11 @@ const MainDoc = () => {
     try {
       await axios.delete(`/api/v1/file/file/${fileId}`)
       fetchAttachments()
+      setNotification({ message: "Attachment deleted.", type: 'info' });
     } catch (error) {
       console.error("Error deleting file:", error)
+      const msg = error.response?.data?.message || "Failed to delete attachment.";
+      setNotification({ message: msg, type: 'error' });
     }
   }
 
@@ -302,15 +310,29 @@ const MainDoc = () => {
     const element = document.querySelector('.ProseMirror')
     if (!element) return
 
+    // Temporarily apply light export styling directly to the live DOM element for html2canvas
+    element.classList.add('pdf-export-mode')
+
     const triggerHtml2Pdf = (el) => {
       const opt = {
         margin:       15,
         filename:     `${title.trim() || 'Untitled Document'}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#18181b' },
+        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       }
-      window.html2pdf().from(el).set(opt).save()
+
+      window.html2pdf()
+        .from(el)
+        .set(opt)
+        .save()
+        .then(() => {
+          el.classList.remove('pdf-export-mode')
+        })
+        .catch((err) => {
+          console.error("PDF export error:", err)
+          el.classList.remove('pdf-export-mode')
+        })
     }
 
     if (window.html2pdf) {
@@ -370,6 +392,7 @@ const MainDoc = () => {
       await navigator.clipboard.writeText(shareUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
+      setNotification({ message: "Shareable link copied to clipboard!", type: 'success' })
 
       if (doc && !doc.isPublic) {
         const res = await axios.patch(`/api/v1/docs/${id}/toggle-public`)
@@ -379,6 +402,7 @@ const MainDoc = () => {
       }
     } catch (err) {
       console.error("Failed to share link:", err)
+      setNotification({ message: "Failed to copy share link.", type: 'error' })
     }
   }
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { anticipate, motion, scale } from "motion/react";
 import axios from 'axios';
+import Notification from '../components/Notification/Notification';
 
 const FormComponent = ({login, setLogin, onLoginSuccess}) => {
 
@@ -8,46 +9,57 @@ const FormComponent = ({login, setLogin, onLoginSuccess}) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [avatar, setAvatar] = useState(null);
+    const [notification, setNotification] = useState(null);
 
    const SaveIt = async () => {
-  console.log(login);
-
   if (login) {
-    console.log(email, username, password);
+    if (!username && !email) {
+      setNotification({ message: "Please enter your username or email.", type: 'error' });
+      return;
+    }
+    if (!password) {
+      setNotification({ message: "Please enter your password.", type: 'error' });
+      return;
+    }
     try {
       const res = await axios.post('/api/v1/user/login', {
         username,
         email,
         password,
       });
-      console.log('Login success:', res.data);
       if (onLoginSuccess && res.data.data?.user) {
         onLoginSuccess(res.data.data.user);
       }
     } catch (error) {
       console.log('Login failed:', error.response?.data || error.message);
+      const msg = error.response?.data?.message || "Login failed. Please check your credentials.";
+      setNotification({ message: msg, type: 'error' });
     }
   } else {
+    if (!email || !username || !password) {
+      setNotification({ message: "Please fill in all required fields.", type: 'error' });
+      return;
+    }
     const formData = new FormData();
     formData.append('email', email);
     formData.append('username', username);
     formData.append('password', password);
-    formData.append('avatar', avatar);
+    if (avatar) formData.append('avatar', avatar);
 
     try {
-    const res = await axios.post('/api/v1/user/register', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+      const res = await axios.post('/api/v1/user/register', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-    console.log('Register success:', res.data);
-    setLogin(true)
-  } catch (error) {
-    console.error('Register failed:', error.response?.data || error.message);
-  }
-
-    
+      setNotification({ message: "Account created successfully! Please log in.", type: 'success' });
+      setLogin(true);
+    } catch (error) {
+      console.error('Register failed:', error.response?.data || error.message);
+      const msg = error.response?.data?.message || "Registration failed. Please try again.";
+      setNotification({ message: msg, type: 'error' });
+    }
   }
 };
 
@@ -115,6 +127,8 @@ const FormComponent = ({login, setLogin, onLoginSuccess}) => {
           <h1 className='font-300 mb-5 text-xl top-6 font-bold'>{login?<>Sign Up!</> : <>Login!</>}</h1>
         </button>
       </motion.div>
+
+      <Notification notification={notification} onClose={() => setNotification(null)} />
     </div>
   )
 }
