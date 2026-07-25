@@ -2,8 +2,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Doc } from "../models/doc.model.js";
-import {Folder } from "../models/folder.model.js"
-import mongoose from "mongoose"
+import { Folder } from "../models/folder.model.js";
+import mongoose from "mongoose";
+import { syncEmbeddings } from "../utils/syncEmbeddings.js";
 
 // GET /api/docs - Get all user docs
 const getAllDocs = asyncHandler(async (req, res) => {
@@ -43,6 +44,11 @@ const createDoc = asyncHandler(async (req, res) => {
           tags,
           isPublic
       })
+
+  // Fire-and-forget: sync embeddings without blocking the response
+  syncEmbeddings(doc._id.toString(), req.user._id.toString(), doc.content).catch((err) =>
+    console.error('[createDoc] syncEmbeddings error:', err.message)
+  );
 
   return res.status(201).json(new ApiResponse(201, doc, "doc created successfully"))
 
@@ -86,6 +92,14 @@ const updateDoc = asyncHandler(async (req, res) => {
 
   if (!updatedDoc) {
     throw new ApiError(404, "Document not found or update failed");
+  }
+
+  // Fire-and-forget: sync embeddings without blocking the HTTP response.
+  // Only sync if content was part of this update.
+  if (content) {
+    syncEmbeddings(id, updatedDoc.owner.toString(), updatedDoc.content).catch((err) =>
+      console.error('[updateDoc] syncEmbeddings error:', err.message)
+    );
   }
 
   return res.status(200).json(

@@ -26,6 +26,8 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [loading, setLoading] = useState(true)
   const uploadInputRef = useRef(null)
+  // Semantic search state
+  const [searchResults, setSearchResults] = useState(null) // null = not searched yet; [] = no results
 
   const loadScript = (id, src) => {
     return new Promise((resolve) => {
@@ -281,15 +283,47 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
     }
   }
 
-  // Filter docs by search
-  const filteredDocs = docs.filter(doc => {
-    if (!searchQuery.trim()) return true
-    const q = searchQuery.toLowerCase()
-    return (
-      doc.title?.toLowerCase().includes(q) ||
-      doc.tags?.some(tag => tag.toLowerCase().includes(q))
-    )
-  })
+  // Semantic search via hybrid endpoint (debounced 400ms)
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(null)
+      return
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await axios.post('/api/v1/search', { query: searchQuery.trim() })
+        const hits = res.data.data || []
+        // Map hit docIds back to full doc objects from the docs list
+        const hitDocIds = new Set(hits.map(h => h.docId?.toString()))
+        const matched = docs.filter(d => hitDocIds.has(d._id?.toString()))
+        // If semantic search found nothing, fall back to title substring match
+        if (matched.length === 0) {
+          const q = searchQuery.toLowerCase()
+          setSearchResults(docs.filter(d =>
+            d.title?.toLowerCase().includes(q) ||
+            d.tags?.some(tag => tag.toLowerCase().includes(q))
+          ))
+        } else {
+          // Order by hit rank (order from search results)
+          const orderedIds = hits.map(h => h.docId?.toString())
+          setSearchResults(
+            matched.sort((a, b) => orderedIds.indexOf(a._id?.toString()) - orderedIds.indexOf(b._id?.toString()))
+          )
+        }
+      } catch {
+        // Fallback to local filter on error
+        const q = searchQuery.toLowerCase()
+        setSearchResults(docs.filter(d =>
+          d.title?.toLowerCase().includes(q) ||
+          d.tags?.some(tag => tag.toLowerCase().includes(q))
+        ))
+      }
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [searchQuery, docs])
+
+  // Use semantic search results when available, otherwise full doc list
+  const filteredDocs = searchResults !== null ? searchResults : docs
 
   const pinnedDocs = filteredDocs.filter(d => pinnedDocIds.includes(d._id))
   const recentDocs = filteredDocs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))

@@ -8,9 +8,10 @@ import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
 import CustomHighlight from '../Highlight'
-import { Download, Paperclip, File, Trash2, Loader2, CloudLightning } from 'lucide-react'
+import { Download, Paperclip, File, Trash2, Loader2, CloudLightning, Sparkles } from 'lucide-react'
 import { applyTheme, applyThemeMode } from '../Dashboard/SettingsModal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import RagChat from '../components/RagChat/RagChat'
 import {
   faBold,
   faItalic,
@@ -63,6 +64,9 @@ const MainDoc = () => {
   // Download menu state
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
   const downloadMenuRef = useRef(null)
+
+  // RAG Chat panel state
+  const [ragChatOpen, setRagChatOpen] = useState(false)
 
   const editor = useEditor({
     extensions: [
@@ -450,6 +454,7 @@ const MainDoc = () => {
   }
 
   return (
+    <>
     <div 
       className="min-h-screen w-screen flex flex-col relative overflow-x-hidden"
       style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
@@ -562,6 +567,19 @@ const MainDoc = () => {
           >
             <Paperclip size={13} />
             <span className="hidden sm:inline">Files & History</span>
+          </button>
+
+          <button 
+            className="px-3 py-1.5 rounded-lg border font-bold text-xs transition-all duration-150 cursor-pointer flex items-center gap-1.5"
+            onClick={() => setRagChatOpen(prev => !prev)}
+            style={ragChatOpen
+              ? { borderColor: 'var(--accent)', background: 'var(--accent-dim)', color: 'var(--accent)' }
+              : { borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }
+            }
+            title="Chat with your workspace"
+          >
+            <Sparkles size={13} />
+            <span className="hidden sm:inline">AI Chat</span>
           </button>
 
           <button 
@@ -846,6 +864,10 @@ const MainDoc = () => {
         )}
       </AnimatePresence>
     </div>
+
+    {/* RAG Chat slide-over panel */}
+    <RagChat isOpen={ragChatOpen} onClose={() => setRagChatOpen(false)} />
+  </>
   )
 }
 

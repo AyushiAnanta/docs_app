@@ -1,0 +1,100 @@
+[
+  {
+    "question": "How does the maximum meetings problem work",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a64959e57a854b0863aa84c",
+    "expectedHeadingPath": " Maximum Meetings in One Room",
+    "expectedChunkIndex": 0
+  },
+  {
+    "question": "what's the approach for figuring out train platforms needed",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a64959e57a854b0863aa84c",
+    "expectedHeadingPath": " Maximum Meetings in One Room > Minimum Platforms",
+    "expectedChunkIndex": 1
+  },
+  {
+    "question": "how do you avoid duplicate subsets in backtracking",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a64959e57a854b0863aa84c",
+    "expectedHeadingPath": " Maximum Meetings in One Room > Subsets II",
+    "expectedChunkIndex": 2
+  },
+  {
+    "question": "what mistakes do I keep making in coding problems",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a64959e57a854b0863aa84c",
+    "expectedHeadingPath": " Maximum Meetings in One Room > Common Gaps",
+    "expectedChunkIndex": 3
+  },
+  {
+    "question": "what is voldy's diary",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a64954c57a854b0863aa821",
+    "expectedHeadingPath": " Overview",
+    "expectedChunkIndex": 0
+  },
+  {
+    "question": "what frontend and backend tech is the whiteboard app using",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a64954c57a854b0863aa821",
+    "expectedHeadingPath": " Overview > Tech Stack",
+    "expectedChunkIndex": 1
+  },
+  {
+    "question": "what's currently working vs not done yet in the whiteboard project",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a64954c57a854b0863aa821",
+    "expectedHeadingPath": "Current Status",
+    "expectedChunkIndex": 2
+  },
+  {
+    "question": "what should I build first for voldy's diary",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a64954c57a854b0863aa821",
+    "expectedHeadingPath": "Next Steps",
+    "expectedChunkIndex": 3
+  },
+  {
+    "question": "how many companies am I reaching out to for internships",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a64957b57a854b0863aa836",
+    "expectedHeadingPath": " Target List",
+    "expectedChunkIndex": 0
+  },
+  {
+    "question": "what does my cold email follow-up schedule look like",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a64957b57a854b0863aa836",
+    "expectedHeadingPath": " Target List > Outreach Approach",
+    "expectedChunkIndex": 1
+  },
+  {
+    "question": "which companies have I already drafted applications for",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a64957b57a854b0863aa836",
+    "expectedHeadingPath": " Target List > Materials Prepared",
+    "expectedChunkIndex": 2
+  },
+  {
+    "question": "what AI services does the accessibility app use",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a6495db57a854b0863aa861",
+    "expectedHeadingPath": " What We Built",
+    "expectedChunkIndex": 0
+  },
+  {
+    "question": "what was the biggest technical challenge in the hackathon project",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a6495db57a854b0863aa861",
+    "expectedHeadingPath": "What Was Hard",
+    "expectedChunkIndex": 2
+  },
+  {
+    "question": "what's planned for the next version of the accessibility app",
+    "ownerId": "6a586f387892fd9d32f423dc",
+    "docId": "6a6495db57a854b0863aa861",
+    "expectedHeadingPath": "Planned v2",
+    "expectedChunkIndex": 3
+  }
+]

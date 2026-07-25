@@ -22,6 +22,8 @@ import docRoutes from './routes/doc.routes.js';
 import folderRoutes from './routes/folder.routes.js';
 import versionRoutes from './routes/version.routes.js';
 import fileRoutes from './routes/file.routes.js';
+import searchRoutes from './routes/search.routes.js';
+import ragRoutes from './routes/rag.routes.js';
 
 
 app.use('/api/v1/user', userRoutes);
@@ -29,6 +31,8 @@ app.use('/api/v1/docs', docRoutes);
 app.use('/api/v1/folder', folderRoutes);
 app.use('/api/v1/version', versionRoutes);
 app.use('/api/v1/file', fileRoutes);
+app.use('/api/v1/search', searchRoutes);
+app.use('/api/v1/rag', ragRoutes);
 
 
 export { app }
