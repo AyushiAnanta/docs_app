@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Search, Menu, X, LogOut, User, Settings } from 'lucide-react'
+import { Search, Menu, X, LogOut, User, Settings, Sparkles } from 'lucide-react'
 
-const NavBar = ({ sidebarOpen, onToggleSidebar, searchQuery, onSearchChange, user, onLogout, onSettingsClick }) => {
+const NavBar = ({ sidebarOpen, onToggleSidebar, searchQuery, onSearchChange, user, onLogout, onSettingsClick, ragChatOpen, onToggleRagChat }) => {
   const [profileOpen, setProfileOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const profileRef = useRef(null)
@@ -65,12 +65,26 @@ const NavBar = ({ sidebarOpen, onToggleSidebar, searchQuery, onSearchChange, use
         </div>
       </div>
 
-      {/* Right: Profile */}
-      <div ref={profileRef} style={{ position: 'relative', flexShrink: 0 }}>
+      {/* Right: AI Chat + Profile */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
         <button
-          onClick={() => setProfileOpen(!profileOpen)}
-          className="nav-avatar-btn"
+          className="px-3 py-1.5 rounded-lg border font-bold text-xs transition-all duration-150 cursor-pointer flex items-center gap-1.5"
+          onClick={onToggleRagChat}
+          style={ragChatOpen
+            ? { borderColor: 'var(--accent)', background: 'var(--accent-dim)', color: 'var(--accent)' }
+            : { borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }
+          }
+          title="Chat with your workspace"
         >
+          <Sparkles size={13} />
+          <span className="hidden sm:inline">AI Chat</span>
+        </button>
+
+        <div ref={profileRef} style={{ position: 'relative', flexShrink: 0 }}>
+          <button
+            onClick={() => setProfileOpen(!profileOpen)}
+            className="nav-avatar-btn"
+          >
           {user?.avatar ? (
             <img src={user.avatar} alt="avatar" className="nav-avatar-img" />
           ) : (
@@ -104,8 +118,9 @@ const NavBar = ({ sidebarOpen, onToggleSidebar, searchQuery, onSearchChange, use
           )}
         </AnimatePresence>
       </div>
-    </nav>
-  )
+    </div>
+  </nav>
+)
 }
 
 export default NavBar

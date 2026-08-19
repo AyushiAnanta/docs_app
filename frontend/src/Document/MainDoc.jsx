@@ -14,6 +14,7 @@ import { applyTheme, applyThemeMode } from '../Dashboard/SettingsModal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import RagChat from '../components/RagChat/RagChat'
 import Notification from '../components/Notification/Notification'
+import { Citation } from '../extensions/Citation'
 import {
   faBold,
   faItalic,
@@ -84,6 +85,7 @@ const MainDoc = () => {
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
+      Citation,
       Placeholder.configure({
         placeholder: 'Write something awesome...',
       }),
@@ -898,7 +900,7 @@ const MainDoc = () => {
     </div>
 
     {/* RAG Chat slide-over panel */}
-    <RagChat isOpen={ragChatOpen} onClose={() => setRagChatOpen(false)} />
+    <RagChat isOpen={ragChatOpen} onClose={() => setRagChatOpen(false)} editor={editor} />
 
     {/* Inline toast notification */}
     <Notification notification={notification} onClose={() => setNotification(null)} />

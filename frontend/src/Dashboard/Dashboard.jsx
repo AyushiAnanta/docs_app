@@ -5,6 +5,7 @@ import SideBar from './SideBar'
 import NewDocModal from './NewDocModal'
 import SettingsModal, { applyTheme } from './SettingsModal'
 import Notification from '../components/Notification/Notification'
+import RagChat from '../components/RagChat/RagChat'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import './dashboard.css'
@@ -25,6 +26,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
   })
   const [showNewDocModal, setShowNewDocModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [ragChatOpen, setRagChatOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const uploadInputRef = useRef(null)
   // Semantic search state
@@ -291,6 +293,8 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
         user={user}
         onLogout={handleLogout}
         onSettingsClick={() => setShowSettingsModal(true)}
+        ragChatOpen={ragChatOpen}
+        onToggleRagChat={() => setRagChatOpen(prev => !prev)}
       />
 
       <div className="flex flex-1 overflow-hidden relative">
@@ -356,6 +360,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
       )}
 
       <Notification notification={notification} onClose={() => setNotification(null)} />
+      <RagChat isOpen={ragChatOpen} onClose={() => setRagChatOpen(false)} />
     </div>
   )
 }

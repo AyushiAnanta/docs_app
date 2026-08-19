@@ -17,6 +17,7 @@ function extractText(inlineContent = []) {
   return inlineContent
     .map((node) => {
       if (node.type === 'text') return node.text || '';
+      if (node.type === 'citation') return node.attrs?.claimText || '';
       if (node.type === 'hardBreak') return '\n';
       return '';
     })

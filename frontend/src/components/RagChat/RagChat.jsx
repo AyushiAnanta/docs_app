@@ -20,7 +20,7 @@ const WELCOME_MESSAGE = {
   sources: [],
 };
 
-const RagChat = ({ isOpen, onClose }) => {
+const RagChat = ({ isOpen, onClose, editor }) => {
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -210,7 +210,7 @@ const RagChat = ({ isOpen, onClose }) => {
           }}
         >
           {messages.map((msg, i) => (
-            <MessageBubble key={i} message={msg} />
+            <MessageBubble key={i} message={msg} editor={editor} />
           ))}
 
           {/* Loading indicator */}

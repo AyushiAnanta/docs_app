@@ -5,10 +5,10 @@
  */
 
 import React from 'react';
-import { FileText, ExternalLink } from 'lucide-react';
+import { FileText, ExternalLink, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const MessageBubble = ({ message }) => {
+const MessageBubble = ({ message, editor }) => {
   const navigate = useNavigate();
   const isUser = message.role === 'user';
 
@@ -49,6 +49,24 @@ const MessageBubble = ({ message }) => {
       return <span key={i}>{part}</span>;
     });
   }
+
+  const handleInsertCitation = (src, e) => {
+    e.stopPropagation();
+    if (!editor) return;
+
+    editor
+      .chain()
+      .focus()
+      .insertCitation({
+        docId: src.docId,
+        docTitle: src.headingPath?.split('>')[0]?.trim() || 'Source Document',
+        headingPath: src.headingPath,
+        chunkIndex: src.chunkIndex,
+        snippet: src.preview || '',
+        claimText: message.content ? message.content.slice(0, 100) + '…' : 'Cited claim',
+      })
+      .run();
+  };
 
   return (
     <div
@@ -105,7 +123,7 @@ const MessageBubble = ({ message }) => {
             Sources
           </p>
           {message.sources.map((src) => (
-            <button
+            <div
               key={src.sourceIndex}
               onClick={() => navigate(`/document/${src.docId}`)}
               title={src.preview}
@@ -143,8 +161,31 @@ const MessageBubble = ({ message }) => {
               >
                 [{src.sourceIndex}] {src.headingPath}
               </span>
+              
+              {editor && (
+                <button
+                  onClick={(e) => handleInsertCitation(src, e)}
+                  title="Insert citation node into editor"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    background: 'var(--accent)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 4,
+                    padding: '2px 6px',
+                    fontSize: 10,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Plus size={10} /> Insert
+                </button>
+              )}
+
               <ExternalLink size={11} color="var(--text-muted)" />
-            </button>
+            </div>
           ))}
         </div>
       )}

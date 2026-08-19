@@ -214,3 +214,54 @@ h1 {
     padding: 0 !important;
   }
 }
+
+/* ============================
+   CITATION NODE STYLES
+   ============================ */
+.citation-node-wrapper {
+  display: inline;
+  vertical-align: baseline;
+}
+
+.citation-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 4px;
+  margin-right: 4px;
+  padding: 1px 7px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 999px;
+  background: var(--accent-dim, rgba(217, 70, 239, 0.15));
+  color: var(--accent, #D946EF);
+  border: 1px solid rgba(217, 70, 239, 0.35);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: all 0.15s ease;
+}
+
+.citation-pill:hover {
+  background: rgba(217, 70, 239, 0.25);
+  border-color: rgba(217, 70, 239, 0.6);
+  transform: translateY(-1px);
+}
+
+.citation-preview-card {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 270px;
+  padding: 10px 12px;
+  background: var(--bg-secondary, #1c1c22);
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  pointer-events: none;
+  text-align: left;
+  white-space: normal;
+  line-height: 1.4;
+}
