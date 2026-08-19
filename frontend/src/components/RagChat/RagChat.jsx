@@ -10,7 +10,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Sparkles, Loader2, RotateCcw } from 'lucide-react';
-import axios from 'axios';
+import api from '../../axios';
 import MessageBubble from './MessageBubble';
 
 const WELCOME_MESSAGE = {
@@ -50,7 +50,7 @@ const RagChat = ({ isOpen, onClose, editor }) => {
     setLoading(true);
 
     try {
-      const res = await axios.post('/api/v1/rag/query', { query });
+      const res = await api.post('/api/v1/rag/query', { query });
       const { answer, sources } = res.data.data;
       setMessages((prev) => [...prev, { role: 'assistant', content: answer, sources }]);
     } catch (err) {

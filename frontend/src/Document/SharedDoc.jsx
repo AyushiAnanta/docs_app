@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import axios from 'axios'
+import api from '../axios'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
@@ -19,7 +19,7 @@ const SharedDoc = () => {
 
   useEffect(() => {
     if (doc && doc.content && doc.content.type === 'file-upload' && doc.content.extension === 'txt' && doc.content.fileUrl) {
-      axios.get(doc.content.fileUrl)
+      api.get(doc.content.fileUrl)
         .then(res => setTxtContent(res.data))
         .catch(err => console.error("Error fetching shared text file:", err))
     }
@@ -55,7 +55,7 @@ const SharedDoc = () => {
       try {
         setLoading(true)
         setError('')
-        const res = await axios.get(`/api/v1/docs/shared/${id}`)
+        const res = await api.get(`/api/v1/docs/shared/${id}`)
         if (res.data.success || res.data.statusCode === 200) {
           const fetchedDoc = res.data.data
           setDoc(fetchedDoc)

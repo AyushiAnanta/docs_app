@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from './axios.js'
 import Authentication from './Authentication/Authentication'
 import Dashboard from './Dashboard/Dashboard.jsx'
 import MainDoc from "./Document/MainDoc.jsx"
@@ -14,7 +14,7 @@ const App = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await axios.get('/api/v1/user/current-user');
+        const res = await api.get('/api/v1/user/current-user');
         if (res.data.success || res.data.statusCode === 200) {
           setUser(res.data.data);
         }

@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react'
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../axios'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
@@ -42,7 +42,7 @@ const MainDoc = () => {
 
   useEffect(() => {
     if (doc && doc.content && doc.content.type === 'file-upload' && doc.content.extension === 'txt' && doc.content.fileUrl) {
-      axios.get(doc.content.fileUrl)
+      api.get(doc.content.fileUrl)
         .then(res => setTxtContent(res.data))
         .catch(err => console.error("Error fetching text file content:", err))
     }
@@ -123,7 +123,7 @@ const MainDoc = () => {
     const fetchDoc = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`/api/v1/docs/${id}`);
+        const res = await api.get(`/api/v1/docs/${id}`);
         if ((res.data.success || res.data.statusCode === 200) && isMounted) {
           const fetchedDoc = res.data.data;
           setDoc(fetchedDoc);
@@ -172,7 +172,7 @@ const MainDoc = () => {
       try {
         const currentTitle = title.trim() || 'Untitled Document';
         const content = editor.getJSON();
-        await axios.patch(`/api/v1/docs/${id}`, {
+        await api.patch(`/api/v1/docs/${id}`, {
           title: currentTitle,
           content
         });
@@ -189,7 +189,7 @@ const MainDoc = () => {
   // Fetch Version History
   const fetchVersions = async () => {
     try {
-      const res = await axios.get(`/api/v1/version/${id}`)
+      const res = await api.get(`/api/v1/version/${id}`)
       if (res.data.success || res.data.statusCode === 200) {
         setVersions(res.data.data || [])
       }
@@ -201,7 +201,7 @@ const MainDoc = () => {
   // Fetch Attachments
   const fetchAttachments = async () => {
     try {
-      const res = await axios.get(`/api/v1/file/${id}`)
+      const res = await api.get(`/api/v1/file/${id}`)
       if (res.data.success || res.data.statusCode === 200) {
         setFiles(res.data.data || [])
       }
@@ -228,13 +228,13 @@ const MainDoc = () => {
       const currentTitle = title.trim() || 'Untitled Document';
       const content = editor.getJSON();
       
-      const res = await axios.patch(`/api/v1/docs/${id}`, {
+      const res = await api.patch(`/api/v1/docs/${id}`, {
         title: currentTitle,
         content
       });
 
       if (res.data.success || res.data.statusCode === 200) {
-        await axios.post(`/api/v1/version/${id}`, {
+        await api.post(`/api/v1/version/${id}`, {
           content
         });
         navigate('/dashboard');
@@ -247,7 +247,7 @@ const MainDoc = () => {
   // Restore document version
   const handleRestore = async (versionId) => {
     try {
-      const res = await axios.patch(`/api/v1/version/version/${versionId}/restore`);
+      const res = await api.patch(`/api/v1/version/version/${versionId}/restore`);
       if (res.data.success || res.data.statusCode === 200) {
         const restoredDoc = res.data.data;
         editor.commands.setContent(restoredDoc.content);
@@ -274,7 +274,7 @@ const MainDoc = () => {
 
     try {
       setUploading(true)
-      const res = await axios.post(`/api/v1/file/${id}`, formData, {
+      const res = await api.post(`/api/v1/file/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
       if (res.data.success || res.data.statusCode === 201) {
@@ -296,7 +296,7 @@ const MainDoc = () => {
     const confirmDelete = window.confirm("Are you sure you want to delete this attachment?")
     if (!confirmDelete) return
     try {
-      await axios.delete(`/api/v1/file/file/${fileId}`)
+      await api.delete(`/api/v1/file/file/${fileId}`)
       fetchAttachments()
       setNotification({ message: "Attachment deleted.", type: 'info' });
     } catch (error) {
@@ -397,7 +397,7 @@ const MainDoc = () => {
       setNotification({ message: "Shareable link copied to clipboard!", type: 'success' })
 
       if (doc && !doc.isPublic) {
-        const res = await axios.patch(`/api/v1/docs/${id}/toggle-public`)
+        const res = await api.patch(`/api/v1/docs/${id}/toggle-public`)
         if (res.data.success || res.data.statusCode === 200) {
           setDoc(prev => ({ ...prev, isPublic: true }))
         }

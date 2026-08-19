@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { X, User, Palette, Lock, Mail, Check, AlertCircle } from 'lucide-react'
-import axios from 'axios'
+import api from '../axios'
 
 const THEMES = [
   { id: 'vibrant-magenta', name: 'Vibrant Pop', primary: '#D946EF', secondary: '#F59E0B', desc: 'Magenta & Warm Amber (Default)' },
@@ -71,7 +71,7 @@ const SettingsModal = ({ user, onClose, onUserUpdate }) => {
     e.preventDefault()
     setProfileMsg({ text: '', type: '' })
     try {
-      const res = await axios.patch('/api/v1/user/update-account', { email })
+      const res = await api.patch('/api/v1/user/update-account', { email })
       if (res.data.success || res.data.statusCode === 200) {
         setProfileMsg({ text: 'Email updated successfully!', type: 'success' })
         if (onUserUpdate) onUserUpdate(res.data.data)
@@ -91,7 +91,7 @@ const SettingsModal = ({ user, onClose, onUserUpdate }) => {
     }
 
     try {
-      const res = await axios.post('/api/v1/user/change-password', { oldPassword, newPassword })
+      const res = await api.post('/api/v1/user/change-password', { oldPassword, newPassword })
       if (res.data.success || res.data.statusCode === 200) {
         setPasswordMsg({ text: 'Password changed successfully!', type: 'success' })
         setOldPassword('')

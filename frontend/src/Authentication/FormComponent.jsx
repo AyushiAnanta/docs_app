@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { anticipate, motion, scale } from "motion/react";
-import axios from 'axios';
+import api from '../axios';
 import Notification from '../components/Notification/Notification';
 
 const FormComponent = ({login, setLogin, onLoginSuccess}) => {
@@ -22,7 +22,7 @@ const FormComponent = ({login, setLogin, onLoginSuccess}) => {
       return;
     }
     try {
-      const res = await axios.post('/api/v1/user/login', {
+      const res = await api.post('/api/v1/user/login', {
         username,
         email,
         password,
@@ -47,7 +47,7 @@ const FormComponent = ({login, setLogin, onLoginSuccess}) => {
     if (avatar) formData.append('avatar', avatar);
 
     try {
-      const res = await axios.post('/api/v1/user/register', formData, {
+      const res = await api.post('/api/v1/user/register', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

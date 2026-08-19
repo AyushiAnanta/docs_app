@@ -6,7 +6,7 @@ import NewDocModal from './NewDocModal'
 import SettingsModal, { applyTheme } from './SettingsModal'
 import Notification from '../components/Notification/Notification'
 import RagChat from '../components/RagChat/RagChat'
-import axios from 'axios'
+import api from '../axios'
 import { useNavigate } from 'react-router-dom'
 import './dashboard.css'
 
@@ -59,7 +59,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
         if (folders.length > 0) {
           folderId = folders[0]._id || folders[0].id
         } else {
-          const folderRes = await axios.post('/api/v1/folder/', { name: 'Uploads' })
+          const folderRes = await api.post('/api/v1/folder/', { name: 'Uploads' })
           folderId = folderRes.data.data._id || folderRes.data.data.id
           await fetchFolders()
         }
@@ -69,7 +69,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
       formData.append('file', file)
       if (folderId) formData.append('folderId', folderId)
 
-      const docRes = await axios.post('/api/v1/docs/import', formData, {
+      const docRes = await api.post('/api/v1/docs/import', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       const newDoc = docRes.data.data
@@ -118,7 +118,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
 
   const fetchAllDocs = useCallback(async () => {
     try {
-      const res = await axios.get('/api/v1/docs/')
+      const res = await api.get('/api/v1/docs/')
       setDocs(res.data.data || [])
       setActiveFolder(null)
     } catch (error) {
@@ -131,7 +131,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
 
   const fetchDocsByFolder = useCallback(async (folderId) => {
     try {
-      const res = await axios.get(`/api/v1/docs/folder/${folderId}`)
+      const res = await api.get(`/api/v1/docs/folder/${folderId}`)
       setDocs(res.data.data || [])
       setActiveFolder(folderId)
     } catch (error) {
@@ -142,7 +142,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
 
   const fetchFolders = useCallback(async () => {
     try {
-      const res = await axios.get('/api/v1/folder/')
+      const res = await api.get('/api/v1/folder/')
       setFolders(res.data.data || [])
     } catch (error) {
       console.error('Error fetching folders:', error)
@@ -162,7 +162,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
 
   const handleDeleteDoc = async (docId) => {
     try {
-      await axios.delete(`/api/v1/docs/${docId}`)
+      await api.delete(`/api/v1/docs/${docId}`)
       setDocs(prev => prev.filter(d => d._id !== docId))
       setPinnedDocIds(prev => prev.filter(id => id !== docId))
       setNotification({ message: "Document deleted successfully.", type: 'info' })
@@ -175,7 +175,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('/api/v1/user/logout')
+      await api.post('/api/v1/user/logout')
       onLogout()
     } catch (error) {
       console.error('Logout error:', error)
@@ -186,7 +186,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
 
   const handleNewDoc = async (docData) => {
     try {
-      const res = await axios.post('/api/v1/docs/', docData)
+      const res = await api.post('/api/v1/docs/', docData)
       const newDoc = res.data.data
       setShowNewDocModal(false)
       navigate(`/document/${newDoc._id}`)
@@ -199,7 +199,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
 
   const handleCreateFolder = async (name, parentFolder) => {
     try {
-      await axios.post('/api/v1/folder/', { name, parentFolder })
+      await api.post('/api/v1/folder/', { name, parentFolder })
       fetchFolders()
       setNotification({ message: `Folder "${name}" created.`, type: 'success' })
     } catch (error) {
@@ -211,7 +211,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
 
   const handleRenameFolder = async (folderId, newName) => {
     try {
-      await axios.patch(`/api/v1/folder/${folderId}`, { name: newName })
+      await api.patch(`/api/v1/folder/${folderId}`, { name: newName })
       fetchFolders()
       setNotification({ message: "Folder renamed.", type: 'success' })
     } catch (error) {
@@ -223,7 +223,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
 
   const handleDeleteFolder = async (folderId) => {
     try {
-      await axios.delete(`/api/v1/folder/${folderId}?withDocs=true`)
+      await api.delete(`/api/v1/folder/${folderId}?withDocs=true`)
       fetchFolders()
       if (activeFolder === folderId) {
         fetchAllDocs()
@@ -244,7 +244,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
     }
     const timer = setTimeout(async () => {
       try {
-        const res = await axios.post('/api/v1/search', { query: searchQuery.trim() })
+        const res = await api.post('/api/v1/search', { query: searchQuery.trim() })
         const hits = res.data.data || []
         // Map hit docIds back to full doc objects from the docs list
         const hitDocIds = new Set(hits.map(h => h.docId?.toString()))
