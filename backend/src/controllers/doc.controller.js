@@ -3,27 +3,25 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Doc } from "../models/doc.model.js";
 import { Folder } from "../models/folder.model.js";
+import { Embedding } from "../models/embedding.model.js";
+import { Version } from "../models/version.model.js";
+import { File } from "../models/file.model.js";
 import mongoose from "mongoose";
 import { syncEmbeddings } from "../utils/syncEmbeddings.js";
 import { importFile } from "../utils/fileImport/index.js";
 
 // GET /api/docs - Get all user docs
 const getAllDocs = asyncHandler(async (req, res) => {
-  // TODO: Fetch all docs for the logged-in user
+  const docs = await Doc.aggregate([
+    {
+      $match: {
+        owner: new mongoose.Types.ObjectId(req.user._id),
+      },
+    },
+    { $sort: { createdAt: -1 } },
+  ]);
 
-    const docs = await Doc.aggregate([{
-            $match: {
-                owner: new mongoose.Types.ObjectId(req.user._id) 
-            }
-        },
-        {$sort: {createdAt: -1}}
-    ])
-
-    if (!docs || docs.length === 0) {
-        throw new ApiError(404,[], "documents could not be fetched")
-    }
-
-    return res.status(200).json(new ApiResponse(200, docs, "Docs fetched successfully"))
+  return res.status(200).json(new ApiResponse(200, docs || [], "Docs fetched successfully"));
 });
 
 // POST /api/docs - Create new doc
@@ -111,19 +109,22 @@ const updateDoc = asyncHandler(async (req, res) => {
 
 // DELETE /api/docs/:id - Delete doc
 const deleteDoc = asyncHandler(async (req, res) => {
-  // TODO: Delete a document
+  const docId = req.params.id;
 
-    try {
-        const  docId  = req.params.id
-        const doc = await Doc.findByIdAndDelete(
-            docId)
-        
-            
-        return res.status(200).json(new ApiResponse(200, null, "Document Deleted Successfully"))
-        
-    } catch (error) {
-        throw new ApiError(400, error)
-    }
+  const doc = await Doc.findOneAndDelete({ _id: docId, owner: req.user._id });
+
+  if (!doc) {
+    throw new ApiError(404, "Document not found");
+  }
+
+  // Cleanup orphaned embeddings, versions, and attachments
+  await Promise.allSettled([
+    Embedding.deleteMany({ docId }),
+    Version.deleteMany({ document: docId }),
+    File.deleteMany({ document: docId }),
+  ]);
+
+  return res.status(200).json(new ApiResponse(200, null, "Document deleted successfully"));
 });
 
 // PATCH /api/docs/:id/toggle-public - Toggle visibility

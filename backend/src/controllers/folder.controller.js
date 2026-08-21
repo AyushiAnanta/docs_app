@@ -4,6 +4,9 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Folder } from "../models/folder.model.js";
 import { Doc } from "../models/doc.model.js";
+import { Embedding } from "../models/embedding.model.js";
+import { Version } from "../models/version.model.js";
+import { File } from "../models/file.model.js";
 
 // POST /api/folders - Create new folder
 export const createFolder = asyncHandler(async (req, res) => {
@@ -118,15 +121,28 @@ export const deleteFolderAndDocs = asyncHandler(async (req, res) => {
   const { withDocs } = req.query;
 
   // Step 1: Delete the folder
-  const folder = await Folder.findByIdAndDelete(id);
+  const folder = await Folder.findOneAndDelete({ _id: id, owner: req.user._id });
 
   if (!folder) {
     throw new ApiError(404, "Folder not found");
   }
 
-  // Step 2: If withDocs is true, delete associated docs
+  // Step 2: If withDocs is true, delete associated docs and their artifacts
   if (withDocs === "true") {
-    await Doc.deleteMany({ folder: id });
+    const docsToDelete = await Doc.find({ folder: id, owner: req.user._id }, { _id: 1 });
+    const docIds = docsToDelete.map((d) => d._id);
+
+    if (docIds.length > 0) {
+      await Promise.allSettled([
+        Doc.deleteMany({ _id: { $in: docIds } }),
+        Embedding.deleteMany({ docId: { $in: docIds } }),
+        Version.deleteMany({ document: { $in: docIds } }),
+        File.deleteMany({ document: { $in: docIds } }),
+      ]);
+    }
+  } else {
+    // If withDocs is false, move orphan docs to root/general (unset folder)
+    await Doc.updateMany({ folder: id }, { $unset: { folder: 1 } });
   }
 
   return res.status(200).json(
