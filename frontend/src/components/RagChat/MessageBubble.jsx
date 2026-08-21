@@ -1,10 +1,13 @@
 /**
  * MessageBubble.jsx
  * Renders a single chat message (user or assistant).
+ * Assistant messages are rendered as formatted markdown with citation pills.
  * Styled using the existing "Vibrant Minimal" design token set.
  */
 
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { FileText, ExternalLink, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,42 +15,19 @@ const MessageBubble = ({ message, editor }) => {
   const navigate = useNavigate();
   const isUser = message.role === 'user';
 
-  // Parse [Source N] citations into clickable spans if sources exist
-  function renderAnswer(text, sources) {
-    if (!sources || sources.length === 0) return <span>{text}</span>;
-
-    const parts = text.split(/(\[Source \d+\])/g);
-    return parts.map((part, i) => {
-      const match = part.match(/\[Source (\d+)\]/);
-      if (match) {
-        const idx = parseInt(match[1], 10) - 1;
-        const source = sources[idx];
-        if (source) {
-          return (
-            <button
-              key={i}
-              onClick={() => navigate(`/document/${source.docId}`)}
-              title={`Go to: ${source.headingPath}`}
-              style={{
-                background: 'var(--accent-dim)',
-                color: 'var(--accent)',
-                border: '1px solid rgba(217,70,239,0.25)',
-                borderRadius: 4,
-                padding: '1px 6px',
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-                margin: '0 2px',
-                lineHeight: 1.4,
-              }}
-            >
-              {part}
-            </button>
-          );
-        }
-      }
-      return <span key={i}>{part}</span>;
-    });
+  /**
+   * Pre-process the markdown text:
+   * Replace [Source N] tokens with inline HTML-safe markers that
+   * ReactMarkdown will leave intact, then render them as clickable pills
+   * via the custom 'code' component override.
+   *
+   * Strategy: wrap [Source N] in backticks so ReactMarkdown treats them
+   * as inline code, then we hijack the `code` renderer to display pills.
+   */
+  function preprocessCitations(text) {
+    if (!text) return '';
+    // Wrap [Source N] in backticks: `[Source N]` → ReactMarkdown renders as <code>
+    return text.replace(/\[Source (\d+)\]/g, '`[Source $1]`');
   }
 
   const handleInsertCitation = (src, e) => {
@@ -66,6 +46,192 @@ const MessageBubble = ({ message, editor }) => {
         claimText: message.content ? message.content.slice(0, 100) + '…' : 'Cited claim',
       })
       .run();
+  };
+
+  /** Custom ReactMarkdown component overrides for theming */
+  const markdownComponents = {
+    // Hijack inline code to render [Source N] as clickable pills
+    code({ children, inline, ...props }) {
+      const text = String(children).trim();
+      const sourceMatch = text.match(/^\[Source (\d+)\]$/);
+      if (inline && sourceMatch && message.sources) {
+        const idx = parseInt(sourceMatch[1], 10) - 1;
+        const source = message.sources[idx];
+        if (source) {
+          return (
+            <button
+              onClick={() => navigate(`/document/${source.docId}`)}
+              title={`Go to: ${source.headingPath}`}
+              style={{
+                background: 'var(--accent-dim)',
+                color: 'var(--accent)',
+                border: '1px solid rgba(217,70,239,0.25)',
+                borderRadius: 4,
+                padding: '1px 6px',
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: 'pointer',
+                margin: '0 2px',
+                lineHeight: 1.4,
+                verticalAlign: 'middle',
+              }}
+            >
+              {text}
+            </button>
+          );
+        }
+      }
+      // Regular inline code
+      if (inline) {
+        return (
+          <code
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              padding: '1px 5px',
+              borderRadius: 4,
+              fontSize: '0.9em',
+              fontFamily: 'monospace',
+            }}
+            {...props}
+          >
+            {children}
+          </code>
+        );
+      }
+      // Block code (shouldn't hit here, handled by `pre`)
+      return <code {...props}>{children}</code>;
+    },
+    // Code blocks
+    pre({ children }) {
+      return (
+        <pre
+          style={{
+            background: 'rgba(0,0,0,0.3)',
+            borderRadius: 8,
+            padding: '10px 14px',
+            overflow: 'auto',
+            fontSize: 12,
+            fontFamily: 'monospace',
+            margin: '8px 0',
+            border: '1px solid var(--border)',
+          }}
+        >
+          {children}
+        </pre>
+      );
+    },
+    // Tables
+    table({ children }) {
+      return (
+        <div style={{ overflowX: 'auto', margin: '8px 0' }}>
+          <table
+            style={{
+              borderCollapse: 'collapse',
+              width: '100%',
+              fontSize: 12,
+            }}
+          >
+            {children}
+          </table>
+        </div>
+      );
+    },
+    th({ children }) {
+      return (
+        <th
+          style={{
+            border: '1px solid var(--border)',
+            padding: '6px 10px',
+            background: 'rgba(255,255,255,0.05)',
+            fontWeight: 600,
+            textAlign: 'left',
+            fontSize: 11,
+            textTransform: 'uppercase',
+            letterSpacing: '0.03em',
+          }}
+        >
+          {children}
+        </th>
+      );
+    },
+    td({ children }) {
+      return (
+        <td
+          style={{
+            border: '1px solid var(--border)',
+            padding: '6px 10px',
+            fontSize: 12.5,
+          }}
+        >
+          {children}
+        </td>
+      );
+    },
+    // Strong (bold)
+    strong({ children }) {
+      return <strong style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{children}</strong>;
+    },
+    // Emphasis (italic)
+    em({ children }) {
+      return <em style={{ fontStyle: 'italic', opacity: 0.92 }}>{children}</em>;
+    },
+    // Headings → render as bold text (no actual headings inside a chat bubble)
+    h1({ children }) {
+      return <p style={{ fontWeight: 700, fontSize: 15, margin: '10px 0 4px' }}>{children}</p>;
+    },
+    h2({ children }) {
+      return <p style={{ fontWeight: 700, fontSize: 14, margin: '8px 0 4px' }}>{children}</p>;
+    },
+    h3({ children }) {
+      return <p style={{ fontWeight: 600, fontSize: 13.5, margin: '6px 0 3px' }}>{children}</p>;
+    },
+    // Paragraphs
+    p({ children }) {
+      return <p style={{ margin: '4px 0' }}>{children}</p>;
+    },
+    // Lists
+    ul({ children }) {
+      return <ul style={{ paddingLeft: 18, margin: '4px 0' }}>{children}</ul>;
+    },
+    ol({ children }) {
+      return <ol style={{ paddingLeft: 18, margin: '4px 0' }}>{children}</ol>;
+    },
+    li({ children }) {
+      return <li style={{ marginBottom: 2 }}>{children}</li>;
+    },
+    // Links
+    a({ children, href }) {
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: 'var(--accent)', textDecoration: 'underline' }}
+        >
+          {children}
+        </a>
+      );
+    },
+    // Blockquotes
+    blockquote({ children }) {
+      return (
+        <blockquote
+          style={{
+            borderLeft: '3px solid var(--accent)',
+            paddingLeft: 12,
+            margin: '6px 0',
+            opacity: 0.85,
+            fontStyle: 'italic',
+          }}
+        >
+          {children}
+        </blockquote>
+      );
+    },
+    // Horizontal rule
+    hr() {
+      return <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '10px 0' }} />;
+    },
   };
 
   return (
@@ -92,13 +258,19 @@ const MessageBubble = ({ message, editor }) => {
           lineHeight: 1.65,
           border: isUser ? 'none' : '1px solid var(--border)',
           boxShadow: isUser ? '0 2px 12px rgba(217,70,239,0.25)' : 'none',
-          whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
         }}
       >
-        {message.role === 'assistant'
-          ? renderAnswer(message.content, message.sources)
-          : message.content}
+        {isUser ? (
+          message.content
+        ) : (
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={markdownComponents}
+          >
+            {preprocessCitations(message.content)}
+          </ReactMarkdown>
+        )}
       </div>
 
       {/* Sources */}
