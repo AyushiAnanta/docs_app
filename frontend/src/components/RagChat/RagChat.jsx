@@ -40,6 +40,30 @@ const RagChat = ({ isOpen, onClose, editor }) => {
     }
   }, [isOpen]);
 
+  const getFriendlyErrorMessage = (err) => {
+    const status = err.response?.status;
+    const backendMsg = err.response?.data?.message;
+
+    if (backendMsg && typeof backendMsg === 'string' && !backendMsg.toLowerCase().includes('status code') && !backendMsg.toLowerCase().includes('error:')) {
+      return backendMsg;
+    }
+
+    if (status === 401 || status === 403) {
+      return "Your session may have expired. Please refresh the page or sign in again.";
+    }
+    if (status === 429) {
+      return "The workspace assistant is experiencing high traffic right now. Please try again in a few moments.";
+    }
+    if (status === 404) {
+      return "The search service is currently unavailable. Please make sure your server is online.";
+    }
+    if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
+      return "Unable to connect to the server. Please check your internet connection or try again shortly.";
+    }
+
+    return "I had trouble searching your documents right now. Please try rephrasing your question or check back in a moment.";
+  };
+
   const handleSend = async () => {
     const query = input.trim();
     if (!query || loading) return;
@@ -54,14 +78,11 @@ const RagChat = ({ isOpen, onClose, editor }) => {
       const { answer, sources } = res.data.data;
       setMessages((prev) => [...prev, { role: 'assistant', content: answer, sources }]);
     } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        err.message ||
-        'Something went wrong. Please try again.';
-      setError(msg);
+      const friendlyMsg = getFriendlyErrorMessage(err);
+      setError(friendlyMsg);
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: `⚠️ ${msg}`, sources: [] },
+        { role: 'assistant', content: friendlyMsg, sources: [] },
       ]);
     } finally {
       setLoading(false);

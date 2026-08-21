@@ -64,9 +64,10 @@ async function answerWithCitations(query, ownerId) {
   const context = buildContext(chunks);
 
   // 3. Call Groq API
-  const client = getGroqClient();
+  try {
+    const client = getGroqClient();
 
-  const systemPrompt = `You are a helpful assistant for a document workspace called "docs."
+    const systemPrompt = `You are a helpful assistant for a document workspace called "docs."
 Your task is to answer the user's question using ONLY the context provided below.
 Do not use any external knowledge — if the answer is not in the context, say so clearly.
 After each factual claim, cite the source like this: [Source N].
@@ -75,27 +76,41 @@ Keep your response concise and well-structured.
 Context:
 ${context}`;
 
-  const response = await client.chat.completions.create({
-    model: GROQ_MODEL,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: query }
-    ],
-    max_tokens: 1024,
-  });
+    const response = await client.chat.completions.create({
+      model: GROQ_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: query }
+      ],
+      max_tokens: 1024,
+    });
 
-  const answer = response.choices[0]?.message?.content || '';
+    const answer = response.choices[0]?.message?.content || "I couldn't generate a complete response. Please try rephrasing your question.";
 
-  // 4. Build sources for deep-linking
-  const sources = chunks.map((chunk, i) => ({
-    sourceIndex: i + 1,
-    docId: chunk.docId,
-    headingPath: chunk.headingPath,
-    chunkIndex: chunk.chunkIndex,
-    preview: chunk.chunkText.slice(0, 150) + (chunk.chunkText.length > 150 ? '…' : ''),
-  }));
+    // 4. Build sources for deep-linking
+    const sources = chunks.map((chunk, i) => ({
+      sourceIndex: i + 1,
+      docId: chunk.docId,
+      headingPath: chunk.headingPath,
+      chunkIndex: chunk.chunkIndex,
+      preview: chunk.chunkText.slice(0, 150) + (chunk.chunkText.length > 150 ? '…' : ''),
+    }));
 
-  return { answer, sources };
+    return { answer, sources };
+  } catch (err) {
+    console.error('[answerWithCitations] LLM generation error:', err);
+    // Return friendly fallback response instead of throwing 400/500
+    return {
+      answer: "I found relevant sections in your workspace, but had trouble generating a summary. Please check the linked sources below or try again in a moment.",
+      sources: chunks.map((chunk, i) => ({
+        sourceIndex: i + 1,
+        docId: chunk.docId,
+        headingPath: chunk.headingPath,
+        chunkIndex: chunk.chunkIndex,
+        preview: chunk.chunkText.slice(0, 150) + (chunk.chunkText.length > 150 ? '…' : ''),
+      })),
+    };
+  }
 }
 
 /**

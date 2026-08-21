@@ -56,36 +56,43 @@ async function hybridSearch(query, ownerId, limit = 5) {
   const ownerObjectId = new mongoose.Types.ObjectId(ownerId);
 
   // 1. Embed the query
-  const queryVector = await embedText(query);
+  let queryVector = [];
+  try {
+    queryVector = await embedText(query);
+  } catch (err) {
+    console.warn('[hybridSearch] embedText failed (falling back to keyword search):', err.message);
+  }
 
   // 2. Vector search (Atlas $vectorSearch)
   let vectorResults = [];
-  try {
-    vectorResults = await Embedding.aggregate([
-      {
-        $vectorSearch: {
-          index: 'vector_index',
-          path: 'vector',
-          queryVector,
-          numCandidates: 100,
-          limit: 20,
-          filter: { ownerId: ownerObjectId },
+  if (queryVector && queryVector.length > 0) {
+    try {
+      vectorResults = await Embedding.aggregate([
+        {
+          $vectorSearch: {
+            index: 'vector_index',
+            path: 'vector',
+            queryVector,
+            numCandidates: 100,
+            limit: 20,
+            filter: { ownerId: ownerObjectId },
+          },
         },
-      },
-      {
-        $project: {
-          docId: 1,
-          chunkIndex: 1,
-          headingPath: 1,
-          chunkText: 1,
-          isCode: 1,
-          score: { $meta: 'vectorSearchScore' },
+        {
+          $project: {
+            docId: 1,
+            chunkIndex: 1,
+            headingPath: 1,
+            chunkText: 1,
+            isCode: 1,
+            score: { $meta: 'vectorSearchScore' },
+          },
         },
-      },
-    ]);
-  } catch (err) {
-    // Atlas Vector Search index may not exist yet; degrade gracefully
-    console.warn('[hybridSearch] vectorSearch failed (index may not exist yet):', err.message);
+      ]);
+    } catch (err) {
+      // Atlas Vector Search index may not exist yet; degrade gracefully
+      console.warn('[hybridSearch] vectorSearch failed (index may not exist yet):', err.message);
+    }
   }
 
   // 3. Text search (MongoDB $text index on chunkText)
