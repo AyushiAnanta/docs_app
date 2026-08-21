@@ -19,8 +19,8 @@ export default function CitationNodeView({ node }) {
     e.stopPropagation();
     if (!docId) return;
     const targetUrl = headingPath
-      ? `/document/${docId}?heading=${encodeURIComponent(headingPath)}`
-      : `/document/${docId}`;
+      ? `/document/${docId}?heading=${encodeURIComponent(headingPath)}&chat=open`
+      : `/document/${docId}?chat=open`;
     navigate(targetUrl);
   };
 

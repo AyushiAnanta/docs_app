@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react'
 import React, { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../axios'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -34,11 +34,21 @@ import {
 const MainDoc = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const headingParam = searchParams.get('heading')
+  const chatParam = searchParams.get('chat')
+
   const [doc, setDoc] = useState(null)
   const [loading, setLoading] = useState(true)
   const [title, setTitle] = useState('')
   const [contentLoaded, setContentLoaded] = useState(false)
   const [txtContent, setTxtContent] = useState('')
+
+  // Reset contentLoaded when document ID changes
+  useEffect(() => {
+    setContentLoaded(false)
+    setDoc(null)
+  }, [id])
 
   useEffect(() => {
     if (doc && doc.content && doc.content.type === 'file-upload' && doc.content.extension === 'txt' && doc.content.fileUrl) {
@@ -68,8 +78,39 @@ const MainDoc = () => {
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
   const downloadMenuRef = useRef(null)
 
-  // RAG Chat panel state
-  const [ragChatOpen, setRagChatOpen] = useState(false)
+  // RAG Chat panel state (respects ?chat=open from citation deep-links)
+  const [ragChatOpen, setRagChatOpen] = useState(() => chatParam === 'open')
+
+  useEffect(() => {
+    if (chatParam === 'open') {
+      setRagChatOpen(true)
+    }
+  }, [chatParam])
+
+  // Scroll to cited heading when document finishes loading
+  useEffect(() => {
+    if (!contentLoaded || !headingParam) return
+
+    const timer = setTimeout(() => {
+      const targetText = headingParam.split('>').pop().trim().toLowerCase()
+      if (!targetText || targetText === '(introduction)') return
+
+      const editorEl = document.querySelector('.ProseMirror')
+      if (!editorEl) return
+
+      const elements = editorEl.querySelectorAll('h1, h2, h3, h4, h5, h6, p, blockquote')
+      for (const el of elements) {
+        if (el.textContent.trim().toLowerCase().includes(targetText)) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          el.classList.add('citation-highlight-target')
+          setTimeout(() => el.classList.remove('citation-highlight-target'), 3500)
+          break
+        }
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [contentLoaded, headingParam])
 
   // Inline notification state
   const [notification, setNotification] = useState(null)

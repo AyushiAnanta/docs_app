@@ -34,18 +34,34 @@ const MessageBubble = ({ message, editor }) => {
     e.stopPropagation();
     if (!editor) return;
 
-    editor
-      .chain()
-      .focus()
-      .insertCitation({
-        docId: src.docId,
-        docTitle: src.headingPath?.split('>')[0]?.trim() || 'Source Document',
-        headingPath: src.headingPath,
-        chunkIndex: src.chunkIndex,
-        snippet: src.preview || '',
-        claimText: message.content ? message.content.slice(0, 100) + '…' : 'Cited claim',
-      })
-      .run();
+    const { selection, doc } = editor.state;
+    const isSelected = !selection.empty;
+    const selectedText = isSelected ? doc.textBetween(selection.from, selection.to) : '';
+
+    const attrs = {
+      docId: src.docId,
+      docTitle: src.headingPath?.split('>')[0]?.trim() || 'Source Document',
+      headingPath: src.headingPath,
+      chunkIndex: src.chunkIndex,
+      snippet: src.preview || '',
+      claimText: selectedText || '',
+    };
+
+    // If editor has an active cursor inside content, insert at cursor with spacing
+    if (selection && selection.from > 1) {
+      editor.chain().focus().insertCitation(attrs).insertContent(' ').run();
+    } else {
+      // If no active cursor, append to the end of the document as a clean block
+      const endPos = doc.content.size - 1;
+      editor
+        .chain()
+        .focus(endPos)
+        .insertContent([
+          { type: 'citation', attrs },
+          { type: 'text', text: ' ' }
+        ])
+        .run();
+    }
   };
 
   /** Custom ReactMarkdown component overrides for theming */
@@ -60,7 +76,10 @@ const MessageBubble = ({ message, editor }) => {
         if (source) {
           return (
             <button
-              onClick={() => navigate(`/document/${source.docId}`)}
+              onClick={() => {
+                const url = `/document/${source.docId}?heading=${encodeURIComponent(source.headingPath || '')}&chat=open`;
+                navigate(url);
+              }}
               title={`Go to: ${source.headingPath}`}
               style={{
                 background: 'var(--accent-dim)',
@@ -297,7 +316,10 @@ const MessageBubble = ({ message, editor }) => {
           {message.sources.map((src) => (
             <div
               key={src.sourceIndex}
-              onClick={() => navigate(`/document/${src.docId}`)}
+              onClick={() => {
+                const url = `/document/${src.docId}?heading=${encodeURIComponent(src.headingPath || '')}&chat=open`;
+                navigate(url);
+              }}
               title={src.preview}
               style={{
                 display: 'flex',
