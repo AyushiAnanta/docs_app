@@ -28,11 +28,7 @@ const App = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-neutral-800 text-white">
-        <div className="text-xl">Loading docs...</div>
-      </div>
-    );
+    return null;
   }
 
   return (
