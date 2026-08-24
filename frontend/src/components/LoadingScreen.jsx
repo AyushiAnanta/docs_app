@@ -1,55 +1,53 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 
 const LoadingScreen = ({ message = 'Loading...' }) => {
+  // Pick a random image between 1.png and 8.png on mount
+  const [imageSrc] = useState(() => {
+    const randomNum = Math.floor(Math.random() * 8) + 1
+    return `/images/${randomNum}.png`
+  })
+
   return (
     <div 
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 transition-all duration-300 select-none"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 transition-all duration-300 select-none h-screen w-screen"
       style={{ background: 'var(--bg-primary, #09090b)', color: 'var(--text-primary, #f4f4f5)' }}
     >
-      {/* Background ambient glow */}
-      <div 
-        className="absolute w-72 h-72 rounded-full pointer-events-none blur-3xl opacity-20 animate-pulse"
-        style={{ background: 'var(--accent, #d946ef)' }}
+      {/* Bobbing Mascot Image */}
+      <motion.img
+        src={imageSrc}
+        alt="Loading mascot"
+        className="w-28 h-28 object-contain"
+        animate={{ y: [0, -14, 0] }}
+        transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      <div className="relative flex flex-col items-center gap-4 z-10">
-        <motion.div
-          animate={{ scale: [0.95, 1.05, 0.95], opacity: [0.8, 1, 0.8] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          className="relative flex items-center justify-center p-3 rounded-2xl border backdrop-blur-md shadow-2xl"
-          style={{ 
-            background: 'var(--bg-secondary, rgba(24, 24, 27, 0.8))', 
-            borderColor: 'var(--border, rgba(255, 255, 255, 0.1))' 
-          }}
+      <div className="flex flex-col items-center gap-3 w-56">
+        {/* Animated Loading Bar */}
+        <div 
+          className="w-full h-1.5 rounded-full overflow-hidden relative"
+          style={{ background: 'var(--border, rgba(255, 255, 255, 0.1))' }}
         >
-          <img 
-            src="/logo.svg" 
-            alt="Logo" 
-            className="w-12 h-12 object-contain"
-            onError={(e) => {
-              // Fallback to /images/1.png if logo.svg fails to load
-              e.target.onerror = null;
-              e.target.src = '/images/1.png';
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: 'var(--accent, #d946ef)' }}
+            animate={{ 
+              x: ['-100%', '100%']
+            }}
+            transition={{
+              duration: 1.4,
+              repeat: Infinity,
+              ease: 'easeInOut'
             }}
           />
-        </motion.div>
+        </div>
 
-        {/* Spinner ring */}
-        <div className="flex items-center gap-2">
-          <div 
-            className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ 
-              borderColor: 'var(--accent, #d946ef)', 
-              borderTopColor: 'transparent' 
-            }}
-          />
-          <span 
-            className="text-sm font-medium tracking-wide"
-            style={{ color: 'var(--text-secondary, #a1a1aa)' }}
-          >
-            {message}
-          </span>
+        {/* Message Text */}
+        <div 
+          className="text-sm font-medium tracking-wide"
+          style={{ color: 'var(--text-secondary, #a1a1aa)' }}
+        >
+          {message}
         </div>
       </div>
     </div>
