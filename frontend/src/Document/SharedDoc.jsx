@@ -6,9 +6,9 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Underline from '@tiptap/extension-underline'
-import CustomHighlight from '../Highlight'
 import { applyTheme, applyThemeMode } from '../Dashboard/SettingsModal'
 import { Globe } from 'lucide-react'
+import LoadingScreen from '../components/LoadingScreen'
 
 const SharedDoc = () => {
   const { id } = useParams()
@@ -77,21 +77,7 @@ const SharedDoc = () => {
   }, [id, editor])
 
   if (loading) {
-    return (
-      <div 
-        className="h-screen w-screen flex flex-col items-center justify-center gap-4"
-        style={{ background: 'var(--bg-primary)', color: 'var(--text-secondary)' }}
-      >
-        <motion.img
-          src="/images/1.png"
-          alt="loading"
-          style={{ height: 120, opacity: 0.6 }}
-          animate={{ y: [0, -10, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-        <div className="text-lg font-medium">Loading shared document...</div>
-      </div>
-    )
+    return <LoadingScreen message="Loading shared document..." />
   }
 
   if (error) {

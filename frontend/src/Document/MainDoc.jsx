@@ -9,11 +9,12 @@ import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import CustomHighlight from '../Highlight'
-import { Download, Paperclip, File, Trash2, Loader2, CloudLightning, Sparkles } from 'lucide-react'
+import { Download, Paperclip, File, Trash2, Loader2, CloudLightning, Sparkles, Globe, Lock } from 'lucide-react'
 import { applyTheme, applyThemeMode } from '../Dashboard/SettingsModal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import RagChat from '../components/RagChat/RagChat'
 import Notification from '../components/Notification/Notification'
+import LoadingScreen from '../components/LoadingScreen'
 import { Citation } from '../extensions/Citation'
 import {
   faBold,
@@ -426,23 +427,38 @@ const MainDoc = () => {
     URL.revokeObjectURL(url)
   }
 
-  // Sharing states
+  // Sharing states & handlers
   const [copied, setCopied] = useState(false)
 
+  const handleTogglePublic = async () => {
+    try {
+      const res = await api.patch(`/api/v1/docs/${id}/toggle-public`)
+      if (res.data.success || res.data.statusCode === 200) {
+        const updatedDoc = res.data.data
+        const newStatus = updatedDoc ? updatedDoc.isPublic : !doc?.isPublic
+        setDoc(prev => ({ ...prev, isPublic: newStatus }))
+        setNotification({
+          message: newStatus ? "Document is now Public! Share button is enabled." : "Document is now Private. Share button hidden.",
+          type: 'info'
+        })
+      }
+    } catch (err) {
+      console.error("Failed to toggle document visibility:", err)
+      setNotification({ message: "Failed to change document visibility.", type: 'error' })
+    }
+  }
+
   const handleShare = async () => {
+    if (!doc?.isPublic) {
+      setNotification({ message: "Document must be public to generate a share link.", type: 'error' })
+      return
+    }
     try {
       const shareUrl = `${window.location.origin}/shared/${id}`
       await navigator.clipboard.writeText(shareUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
       setNotification({ message: "Shareable link copied to clipboard!", type: 'success' })
-
-      if (doc && !doc.isPublic) {
-        const res = await api.patch(`/api/v1/docs/${id}/toggle-public`)
-        if (res.data.success || res.data.statusCode === 200) {
-          setDoc(prev => ({ ...prev, isPublic: true }))
-        }
-      }
     } catch (err) {
       console.error("Failed to share link:", err)
       setNotification({ message: "Failed to copy share link.", type: 'error' })
@@ -511,21 +527,7 @@ const MainDoc = () => {
   const isUploadedFile = doc && doc.content && doc.content.type === 'file-upload'
 
   if (loading) {
-    return (
-      <div 
-        className="h-screen w-screen flex flex-col items-center justify-center gap-4"
-        style={{ background: 'var(--bg-primary)', color: 'var(--text-secondary)' }}
-      >
-        <motion.img
-          src="/images/1.png"
-          alt="loading"
-          style={{ height: 120, opacity: 0.6 }}
-          animate={{ y: [0, -10, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-        <div className="text-lg font-medium">Loading document...</div>
-      </div>
-    )
+    return <LoadingScreen message="Loading document..." />
   }
 
   return (
@@ -626,14 +628,32 @@ const MainDoc = () => {
             </AnimatePresence>
           </div>
 
-          <button 
+          {/* Document Visibility Toggle */}
+          <button
+            onClick={handleTogglePublic}
             className="px-3 py-1.5 rounded-lg border font-bold text-xs transition-all duration-150 cursor-pointer flex items-center gap-1.5"
-            onClick={handleShare}
-            style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
+            style={doc?.isPublic
+              ? { borderColor: 'rgba(16, 185, 129, 0.4)', background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }
+              : { borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }
+            }
+            title={doc?.isPublic ? "Public document — click to make Private" : "Private document — click to make Public"}
           >
-            <FontAwesomeIcon icon={faLink} />
-            <span>{copied ? 'Copied!' : 'Share'}</span>
+            {doc?.isPublic ? <Globe size={13} /> : <Lock size={13} />}
+            <span>{doc?.isPublic ? 'Public' : 'Private'}</span>
           </button>
+
+          {/* Share Button (Only visible if doc is public) */}
+          {doc?.isPublic && (
+            <button 
+              className="px-3 py-1.5 rounded-lg border font-bold text-xs transition-all duration-150 cursor-pointer flex items-center gap-1.5"
+              onClick={handleShare}
+              style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
+              title="Copy shareable public link"
+            >
+              <FontAwesomeIcon icon={faLink} />
+              <span>{copied ? 'Copied!' : 'Share'}</span>
+            </button>
+          )}
 
           <button 
             className="px-3 py-1.5 rounded-lg border font-bold text-xs transition-all duration-150 cursor-pointer flex items-center gap-1.5"

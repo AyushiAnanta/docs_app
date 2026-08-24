@@ -6,6 +6,8 @@ import Dashboard from './Dashboard/Dashboard.jsx'
 import MainDoc from "./Document/MainDoc.jsx"
 import SharedDoc from "./Document/SharedDoc.jsx"
 
+import LoadingScreen from './components/LoadingScreen.jsx'
+
 const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,7 @@ const App = () => {
   }, []);
 
   if (loading) {
-    return null;
+    return <LoadingScreen message="Initializing workspace..." />;
   }
 
   return (
