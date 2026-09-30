@@ -173,7 +173,7 @@ const RagChat = ({ isOpen, onClose, editor }) => {
               Workspace Chat
             </p>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>
-              RAG · powered by Atlas + Claude
+              RAG · powered by Atlas + Groq
             </p>
           </div>
 

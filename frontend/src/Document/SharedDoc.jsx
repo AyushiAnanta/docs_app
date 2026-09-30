@@ -9,6 +9,7 @@ import Underline from '@tiptap/extension-underline'
 import { applyTheme, applyThemeMode } from '../Dashboard/SettingsModal'
 import { Globe } from 'lucide-react'
 import LoadingScreen from '../components/LoadingScreen'
+import CustomHighlight from '../extensions/CustomHighlight'
 
 const SharedDoc = () => {
   const { id } = useParams()
